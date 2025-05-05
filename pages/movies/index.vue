@@ -1,7 +1,7 @@
 <template>
     <div class="p-4">
         <div class="py-6">
-            <h1 class="text-2xl">Trending Content</h1>
+            <h1 class="text-2xl">Now Playing</h1>
         </div>
 
         <div>
@@ -38,30 +38,30 @@ export default {
     data() {
         return {
             items: [],
-            currentPage: parseInt(this.$route.query.page) || 1, // Get page from route or default to 1
-            totalPages: 1, // Total pages will be set dynamically
+            totalPages: 1,
+            currentPage: parseInt(this.$route.query.page) || 1,
         }
     },
     mounted() {
-        this.fetchData(this.currentPage);
+        this.getMovies(this.currentPage);
     },
     watch: {
         '$route.query.page'(newPage) {
             this.currentPage = parseInt(newPage) || 1;
-            this.fetchData(this.currentPage);
+            this.getMovies(this.currentPage);
         }
     },
     methods: {
-        fetchData(page = 1) {
-            this.$axios.get(`trending/all/day?language=en-US&page=${page}`)
+        getMovies(page = 1) {
+            this.$axios.get(`movie/now_playing?language=en-US&page=${page}`)
                 .then(response => {
                     this.items = response.data.results;
-                    this.totalPages = response.data.total_pages; 
-                    console.log(this.items);
+                    this.totalPages = response.data.total_pages;
+                    console.log('movies:', this.items);
                 })
                 .catch(error => {
-                    console.error('Error fetching data:', error);
-                });
+                    console.error('Error fetching data:', error)
+                })
         },
         getImageUrl(posterPath) {
             // Construct the full image URL using the base path
@@ -71,15 +71,16 @@ export default {
         changePage(page) {
             if (page >= 1 && page <= this.totalPages) {
                 if (page === 1) {
-                    // Remove the `page` query parameter for the first page
                     this.$router.push({ query: {} });
                 } else {
-                    // Add the `page` query parameter for other pages
                     this.$router.push({ query: { page } });
                 }
             }
-        },
-    },
-}
-
+        }
+    }
+};
 </script>
+
+<style scoped>
+
+</style>
