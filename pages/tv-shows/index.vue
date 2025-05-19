@@ -1,11 +1,9 @@
 <template>
     <div class="p-4">
-        
-
         <div>
             <div class="flex items-center justify-between mb-5">
                 <div class="py-6">
-                    <h1 class="text-2xl">Now Playing</h1>
+                    <h1 class="text-2xl">Trending Tv-Shows</h1>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-[#1b273b] rounded-lg">
@@ -16,11 +14,9 @@
                         size="large"
                         style="width: 240px"
                         @change="onFilterChange"
+                        clearable
                     >
-                        <el-option
-                            label="All Genres"
-                            :value="null"
-                        />
+                        <el-option label="All Genres" :value="null" />
                         <el-option
                             v-for="genre in genres"
                             :key="genre.id"
@@ -35,13 +31,14 @@
                         size="large"
                         style="width: 240px"
                         @change="onFilterChange"
+                        clearable
                     >
                         <el-option label="Default" value="" />
                         <el-option label="Popularity Desc" value="popularity.desc" />
                         <el-option label="Popularity Asc" value="popularity.asc" />
                     </el-select>
-                        <!-- Year Filter -->
-                        <el-select
+                    <!-- Year Filter -->
+                    <el-select
                         v-model="selectedYear"
                         placeholder="Filter by Year"
                         size="large"
@@ -49,10 +46,7 @@
                         @change="onFilterChange"
                         clearable
                     >
-                        <el-option
-                            label="All Years"
-                            :value="null"
-                        />
+                        <el-option label="All Years" :value="null" />
                         <el-option
                             v-for="year in years"
                             :key="year"
@@ -65,10 +59,10 @@
         </div>
 
         <div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-4">
-                <figure class="p-2 border border-[#1b273b] rounded-lg shadow-sm cursor-pointer" v-for="(item, index) in items" :key="index" @click="viewPage(item.id)">
-                    <img class="max-w-full rounded-lg" :src="getImageUrl(item.poster_path)" :alt="item.title">
-                    <figcaption class="text-lg mt-2 text-center text-[#dfe0ee]">{{ item.title || item.name }}</figcaption>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols gap-4">
+                <figure class="p-2 border border-[#1b273b] rounded-lg shadow-sm cursor-pointer" v-for="(show, index) in shows" :key="index" @click="viewPage(show.id)">
+                    <img class="max-w-full rounded-lg" :src="getImageUrl(show.poster_path)" :alt="show.name">
+                    <figcaption class="text-lg mt-2 text-center text-[#dfe0ee]">{{ show.name }}</figcaption>
                 </figure>
             </div>
         </div>
@@ -89,6 +83,8 @@
                 Next
             </button>
         </div>
+
+        <!-- <pre>{{ shows }}</pre> -->
     </div>
 </template>
 
@@ -96,7 +92,7 @@
 export default {
     data() {
         return {
-            items: [],
+            shows: [],
             totalPages: 1,
             currentPage: parseInt(this.$route.query.page) || 1,
             genres: [],
@@ -112,10 +108,10 @@ export default {
         // Read filters from route params
         const { page, genre, sort, year } = this.$route.query;
         this.currentPage = parseInt(page) || 1;
-        this.selectedGenre = genre ? Number(genre) : null;
+        this.selectedGenre = genre || null;
         this.selectedSort = sort || '';
         this.selectedYear = year ? Number(year) : null;
-        this.getMovies(this.currentPage);
+        this.getShows(this.currentPage);
     },
     watch: {
         '$route.query'(newQuery) {
@@ -123,12 +119,12 @@ export default {
             this.selectedGenre = newQuery.genre || null;
             this.selectedSort = newQuery.sort || '';
             this.selectedYear = newQuery.year ? Number(newQuery.year) : null;
-            this.getMovies(this.currentPage);
+            this.getShows(this.currentPage);
         }
     },
     methods: {
         getGenres() {
-            this.$axios.get('genre/movie/list?language=en-US')
+            this.$axios.get('genre/tv/list?language=en-US')
                 .then(response => {
                     this.genres = response.data.genres;
                 })
@@ -144,13 +140,13 @@ export default {
                 this.years.push(y);
             }
         },
-        getMovies(page = 1) {
+        getShows(page = 1) {
             let params = {
                 language: 'en-US',
                 page: page,
             };
+            // Find genre id by name for API
             if (this.selectedGenre) {
-                // params.with_genres = this.selectedGenre;
                 const genreObj = this.genres.find(g => g.name === this.selectedGenre);
                 if (genreObj) params.with_genres = genreObj.id;
             }
@@ -158,15 +154,14 @@ export default {
                 params.sort_by = this.selectedSort;
             }
             if (this.selectedYear) {
-                params.primary_release_year = this.selectedYear;
+                params.first_air_date_year = this.selectedYear;
             }
-            // Use 'discover/movie' for filtering/sorting, fallback to 'movie/now_playing' for default
-            const endpoint = this.selectedGenre || this.selectedSort || this.selectedYear ? 'discover/movie' : 'movie/now_playing';
+            // Use 'discover/tv' for filtering/sorting, fallback to 'trending/tv/day' for default
+            const endpoint = this.selectedGenre || this.selectedSort || this.selectedYear ? 'discover/tv' : 'trending/tv/day';
             this.$axios.get(endpoint, { params })
                 .then(response => {
-                    this.items = response.data.results;
+                    this.shows = response.data.results;
                     this.totalPages = response.data.total_pages;
-                    console.log('movies:', this.items);
                 })
                 .catch(error => {
                     console.error('Error fetching data:', error)
@@ -177,8 +172,8 @@ export default {
             const baseUrl = 'https://image.tmdb.org/t/p/original';
             return posterPath ? `${baseUrl}${posterPath}` : 'https://flowbite.com/docs/images/examples/image-1@2x.jpg';
         },
-        viewPage(id){
-            this.$router.push('/movies/view/' +id)
+        viewPage(id) {
+            this.$router.push('/tv-shows/view/' +id)
         },
         changePage(page) {
             if (page >= 1 && page <= this.totalPages) {
@@ -194,20 +189,18 @@ export default {
             }
         },
         onFilterChange() {
-            // Always reset to first page when filter/sort/year changes
             const query = {};
             if (this.selectedGenre) query.genre = this.selectedGenre;
             if (this.selectedSort) query.sort = this.selectedSort;
             if (this.selectedYear) query.year = this.selectedYear;
             if (this.currentPage !== 1) query.page = this.currentPage;
-            // query.page = 1;
             this.$router.push({ query });
-            this.getMovies(1);
+            this.getShows(this.currentPage);
         },
     }
-};
+}
 </script>
 
-<style scoped>
+<style>
 
 </style>

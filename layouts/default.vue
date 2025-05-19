@@ -37,15 +37,15 @@
                             Movie
                         </nuxt-link>
                     </li>
-                    <!-- <li>
-                        <a 
-                            href="#" 
-                            :class="isActive('/tv-show') ? 'text-blue-700' : 'text-gray-900 dark:text-white dark:hover:text-white'"
+                    <li>
+                        <nuxt-link
+                            to="/tv-shows" 
+                            :class="isActive('/tv-shows') ? 'text-blue-700' : 'text-gray-900 dark:text-white dark:hover:text-white'"
                             class="block py-2 px-3 rounded-sm md:p-0"
                         >
                             TV-Show
-                        </a>
-                    </li> -->
+                        </nuxt-link>
+                    </li>
                     
                     <div class="relative hidden md:block">
                         <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
@@ -87,7 +87,10 @@ export default {
         const route = useRoute();
 
         const isActive = (path) => {
-            return route.path === path;
+            // Make sure root path ("/") only matches exactly
+            if (path === '/') return route.path === '/';
+            // For other paths, match any subroute
+            return route.path.startsWith(path);
         };
 
         return {

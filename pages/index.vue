@@ -6,10 +6,33 @@
 
         <div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-4">
-                <figure class="p-2 border border-[#1b273b] rounded-lg shadow-sm" v-for="(item, index) in items" :key="index">
+                <!-- <figure class="p-2 border border-[#1b273b] rounded-lg shadow-sm" v-for="(item, index) in items" :key="index">
                     <img class="max-w-full rounded-lg" :src="getImageUrl(item.poster_path)" :alt="item.title">
                     <figcaption class="text-lg mt-2 text-center text-[#dfe0ee]">{{ item.title || item.name }}</figcaption>
-                </figure>
+                </figure> -->
+
+                <div class="p-2 border border-[#1b273b] rounded-lg shadow-sm" v-for="(item, index) in items" :key="index">
+                    <router-link
+                        v-if="item.media_type === 'movie'"
+                        :to="`/movies/view/${item.id}`"
+                        class="block"
+                    >
+                        <img class="max-w-full rounded-lg" :src="getImageUrl(item.poster_path)" :alt="item.title">
+                        <figcaption class="text-lg mt-2 text-center text-[#dfe0ee]">{{ item.title }}</figcaption>
+                    </router-link>
+                    <router-link
+                        v-else-if="item.media_type === 'tv'"
+                        :to="`/tv-shows/view/${item.id}`"
+                        class="block"
+                    >
+                        <img class="max-w-full rounded-lg" :src="getImageUrl(item.poster_path)" :alt="item.name">
+                        <figcaption class="text-lg mt-2 text-center text-[#dfe0ee]">{{ item.name }}</figcaption>
+                    </router-link>
+                    <figure v-else>
+                        <img class="max-w-full rounded-lg" :src="getImageUrl(item.poster_path)" :alt="item.title || item.name">
+                        <figcaption class="text-lg mt-2 text-center text-[#dfe0ee]">{{ item.title || item.name }}</figcaption>
+                    </figure>
+                </div>
             </div>
         </div>
 
@@ -34,7 +57,6 @@
 
 <script>
 export default {
-    layout: 'default',
     data() {
         return {
             items: [],
@@ -78,6 +100,9 @@ export default {
                     this.$router.push({ query: { page } });
                 }
             }
+            this.$nextTick(() => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
         },
     },
 }
